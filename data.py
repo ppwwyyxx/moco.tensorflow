@@ -2,6 +2,7 @@
 
 import numpy as np
 import cv2
+import multiprocessing as mp
 import tensorflow as tf
 from PIL import Image, ImageFilter
 
@@ -146,7 +147,7 @@ def get_moco_dataflow(datadir, batch_size, augmentors):
     Dataflow for training MOCO.
     """
     augmentors = imgaug.AugmentorList(augmentors)
-    parallel = 30  # tuned on a 40-CPU 80-core machine
+    parallel = min(30, mp.cpu_count())  # tuned on a 40-CPU 80-core machine
     ds = dataset.ILSVRC12Files(datadir, 'train', shuffle=True)
     ds = MultiProcessMapAndBatchDataZMQ(ds, parallel, MoCoMapper(augmentors), batch_size, buffer_size=5000)
     return ds
@@ -177,7 +178,7 @@ def get_imagenet_dataflow(datadir, name, batch_size, parallel=None):
     augmentors = get_basic_augmentor(isTrain)
     augmentors = imgaug.AugmentorList(augmentors)
     if parallel is None:
-        parallel = 60
+        parallel = min(50, mp.cpu_count())
 
     def mapf(dp):
         fname, label = dp

@@ -257,8 +257,8 @@ if __name__ == "__main__":
             logger.set_logger_dir('fake_train_log', 'd')
         else:
             if args.logdir is None:
-                args.logdir = 'train_log'
-            logger.set_logger_dir(args.logdir, 'd')
+                args.logdir = './moco'
+            logger.set_logger_dir(args.logdir, 'n')
     logger.info("Rank={}, Local Rank={}, Size={}".format(hvd.rank(), hvd.local_rank(), hvd.size()))
 
     if not args.fake and hvd.local_rank() == 0:

@@ -84,7 +84,11 @@ def get_config(model):
         data = QueueInput(FakeData(
             [[batch, 224, 224, 3], [batch]], 1000, random=False, dtype='uint8'))
     else:
-        data = QueueInput(get_imagenet_dataflow(args.data, 'train', batch))
+        data = QueueInput(
+            get_imagenet_dataflow(args.data, 'train', batch),
+            # use a larger queue
+            queue=tf.FIFOQueue(300, [tf.uint8, tf.int32], [[batch, 224, 224, 3], [batch]])
+        )
         data = StagingInput(data, nr_stage=1)
 
         BASE_LR = 30
@@ -111,12 +115,18 @@ def get_config(model):
             callbacks.append(DataParallelInferenceRunner(
                 dataset_val, infs, list(range(nr_tower))))
 
+    if args.load.endswith(".npz"):
+        # a released model in npz format
+        init = SmartInit(args.load)
+    else:
+        # a pre-trained checkpoint
+        init = SaverRestore(args.load, ignore=("learning_rate", "global_step"))
     return TrainConfig(
         model=model,
         data=data,
         callbacks=callbacks,
         steps_per_epoch=100 if args.fake else 1281167 // args.batch,
-        session_init=SaverRestore(args.load, ignore=("learning_rate", "global_step")),
+        session_init=init,
         max_epoch=100,
     )
 
@@ -136,7 +146,7 @@ if __name__ == "__main__":
         logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')
     else:
         if args.logdir is None:
-            args.logdir = os.path.join('train_log', 'moco-lincls')
+            args.logdir = './moco_lincls'
         logger.set_logger_dir(args.logdir, 'd')
 
     config = get_config(model)

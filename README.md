@@ -11,6 +11,7 @@ Implement and reproduce results of the following papers:
 * Horovod ≥ 0.19 built with Gloo & NCCL support
 * TensorFlow [zmq_ops](https://github.com/tensorpack/zmq_ops)
 * OpenCV
+* the `taskset` command (from the `util-linux` package)
 
 ## Unsupervised Training:
 
@@ -30,13 +31,14 @@ To train a linear classifier using the pre-trained features, run:
 ```
 
 ## Results
-Training was done in a machine with 8 V100s and enough RAM (>200GB) and CPUs.
+Training was done in a machine with 8 V100s, >200GB RAM and 80 CPUs.
 
-Pre-training of 200 epochs takes about 53h;
-100 epochs of linear classifier training takes about 7h.
+200 epochs of pre-training takes ~53h;
+100 epochs of linear classifier training takes ~8h.
 
 Pre-trained models (without linear classifier):
-* MoCo v1: [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v1/MoCo_v1.npz)
+* MoCo v1: [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v1/MoCo_v1.npz).
+	(60.9% linear classification accuracy)
 
 ## Notes:
 
