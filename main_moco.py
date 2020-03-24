@@ -25,10 +25,6 @@ from resnet import ResNetModel
 BASE_LR = 0.03
 
 
-def num_gpu():
-    return hvd.size()
-
-
 def allgather(tensor, name):
     tensor = tf.identity(tensor, name=name + "_HVD")
     return hvd.allgather(tensor)
@@ -186,7 +182,7 @@ class UpdateMomentumEncoder(Callback):
 
 def get_config(model):
     input_sig = model.get_input_signature()
-    nr_tower = max(num_gpu(), 1)
+    nr_tower = max(hvd.size(), 1)
     batch = args.batch // nr_tower
     logger.info("Running on {} towers. Batch size per tower: {}".format(nr_tower, batch))
 
@@ -246,7 +242,7 @@ if __name__ == "__main__":
 
     hvd.init()
 
-    local_batch_size = args.batch // num_gpu()
+    local_batch_size = args.batch // hvd.size()
     if args.v2:
         model = MOCOModel(batch_size=local_batch_size, feature_dims=(2048, 128), temp=0.2)
     else:

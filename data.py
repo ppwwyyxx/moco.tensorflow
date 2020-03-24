@@ -4,7 +4,6 @@ import numpy as np
 import cv2
 import multiprocessing as mp
 import tensorflow as tf
-from PIL import Image, ImageFilter
 
 from tensorpack.dataflow import (
     BatchData, MultiProcessMapAndBatchDataZMQ, MultiProcessRunnerZMQ, MultiThreadMapData, dataset,
@@ -31,19 +30,19 @@ class RandomGrayScale(imgaug.PhotometricAugmentor):
             return img
 
 
-class RandomGaussionBlurPIL(imgaug.PhotometricAugmentor):
-    def __init__(self, sigma):
+class RandomGaussionBlur(imgaug.PhotometricAugmentor):
+    def __init__(self, sigma, kernel, image_shape=224):
         super().__init__()
         self._init(locals())
+        self.kh = self.kw = int(kernel * image_shape) // 2 * 2 + 1
 
     def _get_augment_params(self, _):
         sigma = self._rand_range(self.sigma[0], self.sigma[1])
         return sigma
 
     def _augment(self, img, sigma):
-        img = Image.fromarray(img.astype("uint8"))
-        img = img.filter(ImageFilter.GaussianBlur(radius=sigma))
-        return np.array(img)
+        img = cv2.GaussianBlur(img, (self.kh, self.kw), sigma)
+        return img
 
 
 class TorchvisionCropAndResize(imgaug.ImageAugmentor):
@@ -123,7 +122,7 @@ def get_moco_v2_augmentor():
                  ]), 0.8),
         RandomGrayScale(0.2),
         imgaug.RandomApplyAug(
-            RandomGaussionBlurPIL([0.1, 2.0]), 0.5),
+            RandomGaussionBlur([0.1, 2.0]), 0.5),
         imgaug.ToUint8(),
         imgaug.Flip(horiz=True),
     ]
@@ -180,7 +179,7 @@ def get_imagenet_dataflow(datadir, name, batch_size, parallel=None):
     if parallel is None:
         parallel = min(50, mp.cpu_count())
 
-    def mapf(dp):
+    def mapper(dp):
         fname, label = dp
         img = cv2.imread(fname)
         img = augmentors.augment(img)
@@ -188,10 +187,10 @@ def get_imagenet_dataflow(datadir, name, batch_size, parallel=None):
 
     if isTrain:
         ds = dataset.ILSVRC12Files(datadir, name, shuffle=True)
-        ds = MultiProcessMapAndBatchDataZMQ(ds, parallel, mapf, batch_size, buffer_size=7000)
+        ds = MultiProcessMapAndBatchDataZMQ(ds, parallel, mapper, batch_size, buffer_size=7000)
     else:
         ds = dataset.ILSVRC12Files(datadir, name, shuffle=False)
-        ds = MultiThreadMapData(ds, parallel, mapf, buffer_size=2000, strict=True)
+        ds = MultiThreadMapData(ds, parallel, mapper, buffer_size=2000, strict=True)
         ds = BatchData(ds, batch_size, remainder=True)
         ds = MultiProcessRunnerZMQ(ds, 1)
     return ds

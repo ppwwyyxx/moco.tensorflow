@@ -2,16 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import os
 import tensorflow as tf
 
 from tensorpack.callbacks import (
     ClassificationError, DataParallelInferenceRunner, EstimatedTimeLeft, InferenceRunner,
     ModelSaver, ScheduledHyperParamSetter, ThroughputTracker)
 from tensorpack.dataflow import FakeData
-from tensorpack.input_source import QueueInput, StagingInput
+from tensorpack.input_source import QueueInput
 from tensorpack.models import BatchNorm, FullyConnected
-from tensorpack.tfutils import SaverRestore, argscope, varreplace
+from tensorpack.tfutils import SaverRestore, argscope, varreplace, SmartInit
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.train import (
     ModelDesc, SyncMultiGPUTrainerReplicated, TrainConfig, launch_train_with_config)
@@ -87,9 +86,8 @@ def get_config(model):
         data = QueueInput(
             get_imagenet_dataflow(args.data, 'train', batch),
             # use a larger queue
-            queue=tf.FIFOQueue(300, [tf.uint8, tf.int32], [[batch, 224, 224, 3], [batch]])
+            queue=tf.FIFOQueue(200, [tf.uint8, tf.int32], [[batch, 224, 224, 3], [batch]])
         )
-        data = StagingInput(data, nr_stage=1)
 
         BASE_LR = 30
         SCALED_LR = BASE_LR * (args.batch / 256.0)
@@ -98,7 +96,7 @@ def get_config(model):
             EstimatedTimeLeft(),
             ScheduledHyperParamSetter(
                 'learning_rate', [
-                    (0, min(BASE_LR, SCALED_LR)),
+                    (0, SCALED_LR),
                     (60, SCALED_LR * 1e-1),
                     (70, SCALED_LR * 1e-2),
                     (80, SCALED_LR * 1e-3),
@@ -143,11 +141,11 @@ if __name__ == "__main__":
     model = LinearModel()
 
     if args.fake:
-        logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')
+        logger.set_logger_dir('fake_train_log', 'd')
     else:
         if args.logdir is None:
             args.logdir = './moco_lincls'
-        logger.set_logger_dir(args.logdir, 'd')
+        logger.set_logger_dir(args.logdir)
 
     config = get_config(model)
     trainer = SyncMultiGPUTrainerReplicated(get_num_gpu())

@@ -37,8 +37,10 @@ Training was done in a machine with 8 V100s, >200GB RAM and 80 CPUs.
 100 epochs of linear classifier training takes ~8h.
 
 Pre-trained models (without linear classifier):
-* MoCo v1: [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v1/MoCo_v1.npz).
+* MoCo v1: [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v/MoCo_v1.npz).
 	(60.9% linear classification accuracy)
+* MoCo v2: [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v/MoCo_v2.npz).
+	(66.7% linear classification accuracy)
 
 ## Notes:
 
