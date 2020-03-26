@@ -122,7 +122,7 @@ def get_moco_v2_augmentor():
                  ]), 0.8),
         RandomGrayScale(0.2),
         imgaug.RandomApplyAug(
-            RandomGaussionBlur([0.1, 2.0]), 0.5),
+            RandomGaussionBlur([0.1, 2.0], 0.1), 0.5),
         imgaug.ToUint8(),
         imgaug.Flip(horiz=True),
     ]
