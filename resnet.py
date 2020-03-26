@@ -3,10 +3,47 @@
 import tensorflow as tf
 
 from tensorpack.models import (
-    BatchNorm, Conv2D, FullyConnected, GlobalAvgPooling, LinearWrap, MaxPooling)
+    BatchNorm, Conv2D, FullyConnected, GlobalAvgPooling, LinearWrap,
+    MaxPooling, layer_register)
 from tensorpack.tfutils import argscope
 
 from data import tf_preprocess
+@layer_register(log_shape=True)
+def GroupNorm(x, group=32, center=True, scale=True,
+              gamma_initializer=tf.constant_initializer(1.)):
+    """
+    https://arxiv.org/abs/1803.08494
+    """
+    shape = x.get_shape().as_list()
+    ndims = len(shape)
+    assert ndims in [2, 4]
+    chan = shape[1]
+
+    assert chan % group == 0, chan
+    group_size = chan // group
+
+    orig_shape = tf.shape(x)
+    h, w = orig_shape[2], orig_shape[3]
+
+    x = tf.reshape(x, tf.stack([-1, group, group_size, h, w]))
+
+    mean, var = tf.nn.moments(x, [2, 3, 4], keep_dims=True)
+
+    new_shape = [1, group, group_size, 1, 1]
+
+    if center:
+        beta = tf.get_variable('beta', [chan], initializer=tf.constant_initializer())
+        beta = tf.reshape(beta, new_shape)
+    else:
+        beta = tf.zeros([1, 1, 1, 1, 1], name='beta', dtype=x.dtype)
+    if scale:
+        gamma = tf.get_variable('gamma', [chan], initializer=gamma_initializer)
+        gamma = tf.reshape(gamma, new_shape)
+    else:
+        gamma = tf.ones([1, 1, 1, 1, 1], name='gamma', dtype=x.dtype)
+
+    out = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-5, name='output')
+    return tf.reshape(out, orig_shape, name='output')
 
 
 class ResNetModel:
@@ -58,7 +95,7 @@ class ResNetModel:
             return logits
 
     def norm_func(self, x, name, gamma_initializer=tf.constant_initializer(1.)):
-        return BatchNorm(name + '_bn', x, gamma_initializer=gamma_initializer)
+        return GroupNorm(name + '_gn', x, gamma_initializer=gamma_initializer)
 
     def resnet_group(self, l, name, features, count, stride):
         with tf.variable_scope(name):

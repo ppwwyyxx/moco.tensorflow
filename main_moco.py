@@ -84,15 +84,16 @@ class MOCOModel(ModelDesc):
         q_feat = tf.math.l2_normalize(q_feat, axis=1)
 
         # key encoder
-        shuffled_key, shuffle_idxs = batch_shuffle(key)
-        shuffled_key.set_shape([self.batch_size, None, None, None])
+        #shuffled_key, shuffle_idxs = batch_shuffle(key)
+        #shuffled_key.set_shape([self.batch_size, None, None, None])
+        shuffled_key = key
         with tf.variable_scope("momentum_encoder"), \
                 varreplace.freeze_variables(skip_collection=True), \
                 argscope(BatchNorm, ema_update='skip'):  # don't maintain EMA (will not be used at all)
             key_feat = xla.compile(lambda: self.net.forward(shuffled_key))[0]
             # key_feat = self.net.forward(shuffled_key)
         key_feat = tf.math.l2_normalize(key_feat, axis=1)  # NxC
-        key_feat = batch_unshuffle(key_feat, shuffle_idxs)
+        #key_feat = batch_unshuffle(key_feat, shuffle_idxs)
         key_feat = tf.stop_gradient(key_feat)
 
         # loss
