@@ -1,5 +1,5 @@
 
-Implement and reproduce results of the following papers:
+Implement and __reproduce__ results of the following papers:
 
 * [Momentum Contrast for Unsupervised Visual Representation Learning](https://arxiv.org/abs/1911.05722)
 * [Improved Baselines with Momentum Contrastive Learning](https://arxiv.org/abs/2003.04297)
@@ -33,8 +33,9 @@ To train a linear classifier using the pre-trained features, run:
 ## Results:
 Training was done in a machine with 8 V100s, >200GB RAM and 80 CPUs.
 
-200 epochs of pre-training takes ~53h;
-100 epochs of linear classifier training takes ~8h.
+Following results are obtained after
+200 epochs of pre-training (~53h)
+and 100 epochs of linear classifier tuning (~8h).
 
   |         | linear cls. <br/>accuracy | download <br/>(pretrained only)                                                             |
   | -       | :-:    | :-:                                                                                         |
