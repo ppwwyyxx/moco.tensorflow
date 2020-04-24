@@ -13,87 +13,10 @@ from tensorpack.dataflow import (
 cv2.setNumThreads(0)
 
 
-class RandomGrayScale(imgaug.PhotometricAugmentor):
-    def __init__(self, prob):
-        super().__init__()
-        self._init(locals())
-
-    def _get_augment_params(self, _):
-        return self._rand_range() < self.prob  # do
-
-    def _augment(self, img, do):
-        if do:
-            m = cv2.COLOR_BGR2GRAY
-            grey = cv2.cvtColor(img, m)
-            return np.stack([grey] * 3, axis=2)
-        else:
-            return img
-
-
-class RandomGaussionBlur(imgaug.PhotometricAugmentor):
-    def __init__(self, sigma, kernel, image_shape=224):
-        super().__init__()
-        self._init(locals())
-        self.kh = self.kw = int(kernel * image_shape) // 2 * 2 + 1
-
-    def _get_augment_params(self, _):
-        sigma = self._rand_range(self.sigma[0], self.sigma[1])
-        return sigma
-
-    def _augment(self, img, sigma):
-        img = cv2.GaussianBlur(img, (self.kh, self.kw), sigma)
-        return img
-
-
-class TorchvisionCropAndResize(imgaug.ImageAugmentor):
-    """
-    Unfortunately it's slightly different from the classical
-    GoogleNet CropAndResize in fb.resnet.torch.
-    """
-    def __init__(self, crop_area_fraction=(0.08, 1.),
-                 aspect_ratio_range=(0.75, 1.333),
-                 target_shape=224, interp=cv2.INTER_LINEAR):
-        super().__init__()
-        self._init(locals())
-
-    def get_transform(self, img):
-        h, w = img.shape[:2]
-        area = h * w
-        for _ in range(10):
-            targetArea = self.rng.uniform(*self.crop_area_fraction) * area
-            log_ratio = (np.log(self.aspect_ratio_range[0]), np.log(self.aspect_ratio_range[1]))
-            aspectR = np.exp(self.rng.uniform(*log_ratio))
-            ww = int(np.sqrt(targetArea * aspectR) + 0.5)
-            hh = int(np.sqrt(targetArea / aspectR) + 0.5)
-            if hh <= h and ww <= w:
-                x1 = self.rng.randint(0, w - ww + 1)
-                y1 = self.rng.randint(0, h - hh + 1)
-                return imgaug.TransformList([
-                    imgaug.CropTransform(y1, x1, hh, ww),
-                    imgaug.ResizeTransform(hh, ww, self.target_shape, self.target_shape, interp=self.interp)
-                ])
-        in_ratio = float(w) / float(h)
-        ratio = self.aspect_ratio_range
-        if (in_ratio < min(ratio)):
-            ww = w
-            hh = int(round(w / min(ratio)))
-        elif (in_ratio > max(ratio)):
-            hh = h
-            ww = int(round(h * max(ratio)))
-        else:
-            ww, hh = w, h
-        y1 = (h - hh) // 2
-        x1 = (w - ww) // 2
-        return imgaug.TransformList([
-            imgaug.CropTransform(y1, x1, hh, ww),
-            imgaug.ResizeTransform(hh, ww, self.target_shape, self.target_shape, interp=self.interp)
-        ])
-
-
 def get_moco_v1_augmentor():
     augmentors = [
-        TorchvisionCropAndResize(crop_area_fraction=(0.2, 1.)),
-        RandomGrayScale(0.2),
+        imgaug.GoogleNetRandomCropAndResize(crop_area_fraction=(0.2, 1.)),
+        imgaug.RandomApplyAug(imgaug.Grayscale(rgb=False, keepshape=True), 0.2),
         imgaug.ToFloat32(),
         imgaug.RandomOrderAug(
             [imgaug.BrightnessScale((0.6, 1.4)),
@@ -110,7 +33,7 @@ def get_moco_v1_augmentor():
 
 def get_moco_v2_augmentor():
     augmentors = [
-        TorchvisionCropAndResize(crop_area_fraction=(0.2, 1.)),
+        imgaug.GoogleNetRandomCropAndResize(crop_area_fraction=(0.2, 1.)),
         imgaug.ToFloat32(),
         imgaug.RandomApplyAug(
             imgaug.RandomOrderAug(
@@ -120,9 +43,10 @@ def get_moco_v2_augmentor():
                  # 18 = 180*0.1
                  imgaug.Hue(range=(-18, 18), rgb=False)
                  ]), 0.8),
-        RandomGrayScale(0.2),
+        imgaug.RandomApplyAug(imgaug.Grayscale(rgb=False, keepshape=True), 0.2),
         imgaug.RandomApplyAug(
-            RandomGaussionBlur([0.1, 2.0], 0.1), 0.5),
+            # 11 = 0.1*224//2
+            imgaug.GaussianBlur(size_range=(11, 12), sigma_range=[0.1, 2.0]), 0.5),
         imgaug.ToUint8(),
         imgaug.Flip(horiz=True),
     ]
@@ -156,7 +80,7 @@ def get_basic_augmentor(isTrain):
     interpolation = cv2.INTER_LINEAR
     if isTrain:
         augmentors = [
-            TorchvisionCropAndResize(),
+            imgaug.GoogleNetRandomCropAndResize(),
             imgaug.Flip(horiz=True),
         ]
     else:

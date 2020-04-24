@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import pprint
 import os
 import socket
 import multiprocessing as mp
@@ -37,6 +38,7 @@ if __name__ == '__main__':
             9999999, random=False, dtype=['uint8', 'uint8'])
     else:
         aug = get_moco_v2_augmentor() if args.v2 else get_moco_v1_augmentor()
+        logger.info("Augmentation used: \n" + pprint.pformat(aug))
         ds = get_moco_dataflow(args.data, args.batch, aug)
 
     logger.info("Serving data on {}".format(socket.gethostname()))

@@ -7,7 +7,7 @@ Implement and __reproduce__ results of the following papers:
 ## Dependencies:
 
 * TensorFlow 1.14 or 1.15, built with XLA support
-* [Tensorpack](https://github.com/tensorpack/tensorpack/) ≥ 0.10
+* [Tensorpack](https://github.com/tensorpack/tensorpack/) ≥ 0.10.1
 * [Horovod](https://github.com/horovod/horovod) ≥ 0.19 built with Gloo & NCCL support
 * TensorFlow [zmq_ops](https://github.com/tensorpack/zmq_ops)
 * OpenCV
