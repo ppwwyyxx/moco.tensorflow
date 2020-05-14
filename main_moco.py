@@ -148,7 +148,7 @@ class UpdateMomentumEncoder(Callback):
     momentum = 0.999
 
     def _setup_graph(self):
-        nontrainable_vars = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)
+        nontrainable_vars = list(set(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)))
         all_vars = {v.name: v for v in tf.global_variables() + tf.local_variables()}
 
         # find variables of encoder & momentum encoder
