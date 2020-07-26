@@ -37,10 +37,10 @@ Following results are obtained after
 200 epochs of pre-training (~53h)
 and 100 epochs of linear classifier tuning (~8h).
 
-  |         | linear cls. <br/>accuracy | download <br/>(pretrained only)                                                             |
-  | -       | :-:    | :-:                                                                                         |
-  | MoCo v1 | 60.9%  | [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v/MoCo_v1.npz) |
-  | MoCo v2 | 67.7%  | [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v/MoCo_v2.npz) |
+  |         | linear cls. <br/>accuracy | download <br/>(pretrained only)                                          | tensorboard |
+  | -       | :-:    | :-:                                                                                         | :-: |
+  | MoCo v1 | 60.9%  | [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v/MoCo_v1.npz) | N/A |
+  | MoCo v2 | 67.7%  | [:arrow_down:](https://github.com/ppwwyyxx/moco.tensorflow/releases/download/v/MoCo_v2.npz) | [pretrain](https://tensorboard.dev/experiment/MBL49FKLTLCbKGr7JMolWQ); [finetune](https://tensorboard.dev/experiment/s3ZOxbjbRCy3hMqgL0TzKQ) |
 
 ## Notes:
 
