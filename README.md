@@ -30,12 +30,20 @@ To train a linear classifier using the pre-trained features, run:
 ./main_lincls.py --load /path/to/pretrained/checkpoint --data /path/to/imagenet
 ```
 
+## KNN Evaluation:
+Instead of Linear Classification, a cheap but rough evaluation
+is to perform a feature-space kNN using the training set:
+```
+horovodrun -np 8 ./eval_knn.py --load /path/to/checkpoint --data /path/to/imagenet --top-k 200
+```
+
 ## Results:
 Training was done in a machine with 8 V100s, >200GB RAM and 80 CPUs.
 
 Following results are obtained after
 200 epochs of pre-training (~53h)
 and 100 epochs of linear classifier tuning (~8h).
+KNN evaluation takes 10min per checkpoint.
 
   |         | linear cls. <br/>accuracy | download <br/>(pretrained only)                                          | tensorboard |
   | -       | :-:    | :-:                                                                                         | :-: |
